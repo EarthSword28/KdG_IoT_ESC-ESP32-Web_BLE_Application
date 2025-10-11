@@ -109,7 +109,7 @@
     
     // Write to the ESP32 Deep Sleep Characteristic
     deepSleepOnButton.addEventListener('click', () => writeDeepSleepCharacteristic(1));
-    deepSleepOffButton.addEventListener('click', () => writeDeepSleepCharacteristic());
+    deepSleepOffButton.addEventListener('click', () => writeDeepSleepCharacteristic(2));
 
     // Write to the ESP32 Measure Characteristic
     measureButton.addEventListener('click', () => writeMeasureCharacteristic(1));
@@ -211,8 +211,8 @@
             bleServiceFound.getCharacteristic(deepSleepCharacteristic)
             .then(characteristic => {
                 console.log("Found the Deep Sleep characteristic: ", characteristic.uuid);
-                const data = new Uint8Array([value]);
-                return characteristic.writeValue(data);
+                const deepSleepData = new Uint8Array([value]);
+                return characteristic.writeValue(deepSleepData);
             })
             .then(() => {
                 if (value == 1) {
@@ -235,11 +235,13 @@
         }
     }
 
-    function writeMeasureCharacteristic(){
+    function writeMeasureCharacteristic(value){
         if (bleServer && bleServer.connected) {
             bleServiceFound.getCharacteristic(measureCharacteristic)
             .then(characteristic => {
                 console.log("Found the measure characteristic: ", characteristic.uuid);
+                const measureData = new Uint8Array([value]);
+                return characteristic.writeValue(measureData);
             })
             .catch(error => {
               console.error("Error writing to measure characteristic: ", error);
