@@ -50,6 +50,10 @@ button {
     background-color: #60697c;
 }
 
+.measureButton{
+    background-color: #00ced1;
+}
+
 .connectButton{
     background-color: #24af37;
 }

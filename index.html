@@ -28,12 +28,20 @@
                 </p>
                 <p class="gray-label">BLE state: <strong><span id="bleState" style="color:#d13a30;">Disconnected</span></strong></p>
             </div>
+            <div class="card">
+                <p>
+                  <button id="deepSleepOn" class="onButton"> Deep Sleep Active</button>
+                  <button id="deepSleepOff" class="offButton"> Deep Sleep Inactive</button>
+                </p>
+                <p class="gray-label">Deep Sleep: <strong><span id="deepSleepState" style="color:#1e2bb4;">Active</span></strong></p>
+            </div>
         </div>
         <div class="card-grid">
             <div class="card">
                 <h2>Temperatuur</h2>
                 <p class="reading"><span id="valueContainer">NaN</span></p>
                 <p class="gray-label">Last reading: <span id="timestamp"></span></p>
+                <button id="measureButton" class="measureButton"> Measure Now</button>
             </div>
 
             <div class="card">
@@ -46,8 +54,8 @@
         </div>
     </div>
     <div class="footer">
-        <p><a href="https://randomnerdtutorials.com/">Created by RandomNerdTutorials.com</a></p>
-        <p><a href="https://RandomNerdTutorials.com/esp32-web-bluetooth/">Read the full project here.</a></p>
+        <p>Created by Jorden van Nunen</p>
+        <p><a href="https://RandomNerdTutorials.com/esp32-web-bluetooth/">Created with the help of RandomNerdTutorials.com</a></p>
     </div>
 </body>
 <script>
@@ -61,32 +69,50 @@
     const latestValueSent = document.getElementById('valueSent');
     const bleStateContainer = document.getElementById('bleState');
     const timestampContainer = document.getElementById('timestamp');
+    const deepSleepOnButton = document.getElementById('deepSleepOnButton');
+    const deepSleepOffButton = document.getElementById('deepSleepOnButton');
+    const deepSleepContainer = document.getElementById('deepSleepState');
+    const measureButton = document.getElementById('measureButton');
 
     //Define BLE Device Specs
     var deviceName ='ESP32-E-Jorden';
     var bleService = '743770a3-61e9-4edb-9291-dbd476f484d8';
     var sensorCharacteristic= '0f5bf109-7f09-4954-a0a3-5ec26d4da9a5';
-    var ledCharacteristic = '689dffc1-9faa-4139-9004-e47b914b78ed';
+    var coolerCharacteristic= '689dffc1-9faa-4139-9004-e47b914b78ed';
+    var deepSleepCharacteristic= '1a2b1de3-a861-4415-9ce4-be5a5fbf4bc7';
+    var measureCharacteristic= '8f6e0141-d448-4bf1-8c04-f4ce063ba865';
 
     //Global Variables to Handle Bluetooth
     var bleServer;
     var bleServiceFound;
     var sensorCharacteristicFound;
 
+    var coolerVar;
+    var deepSleepVar;
+
     // Connect Button (search for BLE Devices only if BLE is available)
     connectButton.addEventListener('click', (event) => {
         if (isWebBluetoothEnabled()){
             connectToDevice();
+            writeCoolerCharacteristic(coolerVar);
+            writeDeepSleepCharacteristic(deepSleepVar);
         }
     });
 
     // Disconnect Button
     disconnectButton.addEventListener('click', disconnectDevice);
 
-    // Write to the ESP32 LED Characteristic
-    onButton.addEventListener('click', () => writeOnCharacteristic(1));
-    offButton.addEventListener('click', () => writeOnCharacteristic(2));
-    autoButton.addEventListener('click', () => writeOnCharacteristic(3));
+    // Write to the ESP32 Cooler Characteristic
+    onButton.addEventListener('click', () => writeCoolerCharacteristic(1));
+    offButton.addEventListener('click', () => writeCoolerCharacteristic(2));
+    autoButton.addEventListener('click', () => writeCoolerCharacteristic(3));
+    
+    // Write to the ESP32 Deep Sleep Characteristic
+    deepSleepOnButton.addEventListener('click', () => writeDeepSleepCharacteristic(1));
+    deepSleepOffButton.addEventListener('click', () => writeDeepSleepCharacteristic());
+
+    // Write to the ESP32 Measure Characteristic
+    measureButton.addEventListener('click', () => writeMeasureCharacteristic(1));
 
     // Check if BLE is available in your Browser
     function isWebBluetoothEnabled() {
@@ -157,23 +183,69 @@
         timestampContainer.innerHTML = getDateTime();
     }
 
-    function writeOnCharacteristic(value){
+    function writeCoolerCharacteristic(value){
         if (bleServer && bleServer.connected) {
-            bleServiceFound.getCharacteristic(ledCharacteristic)
+            bleServiceFound.getCharacteristic(coolerCharacteristic)
             .then(characteristic => {
-                console.log("Found the LED characteristic: ", characteristic.uuid);
+                console.log("Found the Cooler characteristic: ", characteristic.uuid);
                 const data = new Uint8Array([value]);
                 return characteristic.writeValue(data);
             })
             .then(() => {
                 latestValueSent.innerHTML = value;
-                console.log("Value written to LEDcharacteristic:", value);
+                coolerVar = value;
+                console.log("Value written to coolerCharacteristic:", value);
             })
             .catch(error => {
-                console.error("Error writing to the LED characteristic: ", error);
+                console.error("Error writing to the Cooler characteristic: ", error);
             });
         } else {
+            coolerVar = value;
             console.error ("Bluetooth is not connected. Cannot write to characteristic.")
+            window.alert("Bluetooth is not connected. Cannot write to characteristic. \n Connect to BLE first!")
+        }
+    }
+
+    function writeDeepSleepCharacteristic(value){
+        if (bleServer && bleServer.connected) {
+            bleServiceFound.getCharacteristic(deepSleepCharacteristic)
+            .then(characteristic => {
+                console.log("Found the Deep Sleep characteristic: ", characteristic.uuid);
+                const data = new Uint8Array([value]);
+                return characteristic.writeValue(data);
+            })
+            .then(() => {
+                if (value == 1) {
+                  deepSleepContainer.innerHTML = "Active";
+                  deepSleepContainer.style.color = "#1e2bb4";
+                } else {
+                  deepSleepContainer.innerHTML = "Inactive";
+                  deepSleepContainer.style.color = "#1b8a94";
+                }
+                console.log("Value written to deepSleepCharacteristic:", value);
+                deepSleepVar = value;
+            })
+            .catch(error => {
+                console.error("Error writing to the Deep Sleep characteristic: ", error);
+            });
+        } else {
+            deepSleepVar = value;
+            console.error ("Bluetooth is not connected. Cannot write to characteristic.")
+            window.alert("Bluetooth is not connected. Cannot write to characteristic. \n Connect to BLE first!")
+        }
+    }
+
+    function writeMeasureCharacteristic(){
+        if (bleServer && bleServer.connected) {
+            bleServiceFound.getCharacteristic(measureCharacteristic)
+            .then(characteristic => {
+                console.log("Found the measure characteristic: ", characteristic.uuid);
+            })
+            .catch(error => {
+              console.error("Error writing to measure characteristic: ", error);
+            })
+        } else {
+            console.error("Bluetooth is not connected. Cannot write to characteristic.")
             window.alert("Bluetooth is not connected. Cannot write to characteristic. \n Connect to BLE first!")
         }
     }
@@ -190,7 +262,7 @@
                     .then(() => {
                         console.log("Device Disconnected");
                         bleStateContainer.innerHTML = "Device Disconnected";
-                        bleStateContainer.style.color = "#d13a30";
+                        bleStateContainer.style.color = "#24af37";
 
                     })
                     .catch(error => {
