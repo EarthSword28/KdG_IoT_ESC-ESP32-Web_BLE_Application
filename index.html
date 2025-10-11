@@ -94,11 +94,6 @@
     connectButton.addEventListener('click', (event) => {
         if (isWebBluetoothEnabled()){
             connectToDevice();
-
-            /* if (bleServer && bleServer.connected){
-                writeCoolerCharacteristic(coolerVar);
-                writeDeepSleepCharacteristic(deepSleepVar);
-            } */
         }
     });
 
