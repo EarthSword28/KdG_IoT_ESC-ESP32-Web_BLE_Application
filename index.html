@@ -28,13 +28,6 @@
                 </p>
                 <p class="gray-label">BLE state: <strong><span id="bleState" style="color:#d13a30;">Disconnected</span></strong></p>
             </div>
-            <div class="card">
-                <p>
-                  <button id="deepSleepOnButton" class="onButton"> Deep Sleep Active</button>
-                  <button id="deepSleepOffButton" class="offButton"> Deep Sleep Inactive</button>
-                </p>
-                <p class="gray-label">Deep Sleep: <strong><span id="deepSleepState" style="color:#1b8a94;">Inactive</span></strong></p>
-            </div>
         </div>
         <div class="card-grid">
             <div class="card">
@@ -69,9 +62,6 @@
     const latestValueSent = document.getElementById('valueSent');
     const bleStateContainer = document.getElementById('bleState');
     const timestampContainer = document.getElementById('timestamp');
-    const deepSleepOnButton = document.getElementById('deepSleepOnButton');
-    const deepSleepOffButton = document.getElementById('deepSleepOffButton');
-    const deepSleepContainer = document.getElementById('deepSleepState');
     const measureButton = document.getElementById('measureButton');
 
     //Define BLE Device Specs
@@ -79,7 +69,6 @@
     var bleService = '743770a3-61e9-4edb-9291-dbd476f484d8';
     var sensorCharacteristic= '0f5bf109-7f09-4954-a0a3-5ec26d4da9a5';
     var coolerCharacteristic= '689dffc1-9faa-4139-9004-e47b914b78ed';
-    var deepSleepCharacteristic= '1a2b1de3-a861-4415-9ce4-be5a5fbf4bc7';
     var measureCharacteristic= '8f6e0141-d448-4bf1-8c04-f4ce063ba865';
 
     //Global Variables to Handle Bluetooth
@@ -88,7 +77,6 @@
     var sensorCharacteristicFound;
 
     var coolerVar = 3;
-    var deepSleepVar = 1;
     var offlineStateVar = true;
 
     // Connect Button (search for BLE Devices only if BLE is available)
@@ -210,35 +198,6 @@
             });
         } else {
             coolerVar = value;
-            console.error ("Bluetooth is not connected. Cannot write to characteristic.")
-            window.alert("Bluetooth is not connected. Cannot write to characteristic. \n Connect to BLE first!")
-        }
-    }
-
-    function writeDeepSleepCharacteristic(value){
-        if (bleServer && bleServer.connected) {
-            bleServiceFound.getCharacteristic(deepSleepCharacteristic)
-            .then(characteristic => {
-                console.log("Found the Deep Sleep characteristic: ", characteristic.uuid);
-                const deepSleepData = new Uint8Array([value]);
-                return characteristic.writeValue(deepSleepData);
-            })
-            .then(() => {
-                if (value == 1) {
-                  deepSleepContainer.innerHTML = "Active";
-                  deepSleepContainer.style.color = "#1e2bb4";
-                } else {
-                  deepSleepContainer.innerHTML = "Inactive";
-                  deepSleepContainer.style.color = "#1b8a94";
-                }
-                console.log("Value written to deepSleepCharacteristic:", value);
-                deepSleepVar = value;
-            })
-            .catch(error => {
-                console.error("Error writing to the Deep Sleep characteristic: ", error);
-            });
-        } else {
-            deepSleepVar = value;
             console.error ("Bluetooth is not connected. Cannot write to characteristic.")
             window.alert("Bluetooth is not connected. Cannot write to characteristic. \n Connect to BLE first!")
         }
